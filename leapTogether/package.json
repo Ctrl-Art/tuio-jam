@@ -1,0 +1,30 @@
+{
+  "name": "leapTogether",
+  "version": "0.0.1",
+  "description": "Leap Input for Collaborative Art",
+  "main": "index.js",
+  "dependencies": {
+    "leapjs": "^0.6.1",
+    "leapjs-plugins": "^0.1.4",
+    "osc-min": "^0.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ctrl-Art/tuio-jam.git"
+  },
+  "keywords": [
+    "leap",
+    "tuio",
+    "websocket"
+  ],
+  "author": "Momo the Monster",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Ctrl-Art/tuio-jam/issues"
+  },
+  "homepage": "https://github.com/Ctrl-Art/tuio-jam"
+}
