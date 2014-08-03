@@ -132,6 +132,7 @@ function pointableToBuffer(pointable){
 function onStart(pointable){
     var buffer = pointableToBuffer(pointable);
     udp.send(buffer, 0, buffer.length, port, host);
+    console.log('pointer start');
 }
 
 function onMove(pointable){
@@ -145,6 +146,7 @@ function onMove(pointable){
 function onEnd(pointable){
     var buffer = pointableToBuffer();
     udp.send(buffer, 0, buffer.length, port, host);
+    console.log('pointer end');
 }
 
 function checkForStaleCursors(){

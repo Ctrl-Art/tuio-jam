@@ -1,0 +1,138 @@
+<html>
+<head>
+    <link rel="stylesheet" href="../styles/main.css"/>
+</head>
+<body>
+
+<canvas id="canvas" width="1920" height="1080">
+    You really badly need to use a different browser.
+</canvas>
+
+<!-- Library Includes -->
+<script type="text/javascript" src="../js/vendor/three/three.min.js"></script>
+<script type="text/javascript" src="../js/vendor/three/THREEx.WindowResize.js"></script>
+<script type="text/javascript" src="../js/vendor/dat.gui.min.js"></script>
+<script type="text/javascript" src="../js/vendor/leap/leap-0.6.0.min.js"></script>
+<script type="text/javascript" src="../js/vendor/leap/leap-plugins-0.1.6.min.js"></script>
+<script type="text/javascript" src="../js/vendor/leap/leap.rigged-hand-0.1.4..min.js"></script>
+<script type="text/javascript" src="../js/vendor/socket.io-0.9.10.min.js"></script>
+
+<!-- Source Includes -->
+<script type="text/javascript" src="../js/input/inputLeap.js"></script>
+<script type="text/javascript">
+
+    var leapTouches = [];
+    var triggerMax = 0.9;
+    var socket = io.connect();
+    var aliveIds = [];
+
+    // Socket Setup
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+
+    function onConnect(){
+        console.log('connected');
+    }
+
+    function onDisconnect(){
+        console.log('disconnected');
+    }
+    
+    Leap.loop({})
+            .use('playback', {
+                recording: '../recordings/test.json',
+                requiredProtocolVersion: 6,
+                pauseOnHand: true,
+                loop: true
+            })
+            .use('riggedHand');
+
+    window.controller = Leap.loopController;
+
+    /**
+     * Leap Frame Loop
+     * Find all fingers on all hands
+     * Test each one for its Touch Zone - https://developer.leapmotion.com/documentation/javascript/devguide/Leap_Touch_Emulation.html
+     * Call onStart, onMove and onFinish which are root-level events for the scene
+     * These are passed in via the constructor above
+     */
+    controller.on('frame', function (frame) {
+
+        // loop through every hand
+        for (var h = 0; h < frame.hands.length; h++) {
+
+            var hand = frame.hands[h];
+            var handMesh = frame.hands[h].data('riggedHand.mesh');
+            var interactionBox = frame.interactionBox;
+
+            // loop through every finger
+            for (var i = 0; i < hand.fingers.length; i++) {
+
+                var finger = hand.fingers[i];
+                var id = finger.id;
+
+                // find existing leap touch to detect Start, Move and End
+                // ongoing touch logic based on https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Touch_events
+                var idx = isLeapPressed(id);
+
+                // get normalized point
+                var p = interactionBox.normalizePoint(finger.stabilizedTipPosition, true);
+                var cursor = {x: p[0], y: 1 - p[1], z: p[2], id: id};
+                if (cursor.z < triggerMax) {
+
+                    if (idx >= 0) {
+                        if (onMove !== null) {
+                            onMove(cursor);
+                        }
+                        leapTouches.splice(idx, 1, cursor);
+                    } else {
+                        if (onStart !== null) {
+                            onStart(cursor);
+                        }
+                        leapTouches.push(cursor);
+                    }
+                } else {
+                    // test that a touch exists before we try to finish it
+                    if (idx >= 0) {
+                        if (onEnd !== null) {
+                            onEnd(cursor);
+                        }
+                        leapTouches.splice(idx, 1);
+                    }
+                }
+
+            } // end of finger loop
+
+        } // end of hand loop
+    });
+
+    /**
+     * Track whether a touch has already started
+     * Helps discern Start, Move and End events
+     * @param idToFind
+     * @returns {number}
+     */
+    function isLeapPressed(idToFind) {
+        for (var i = 0; i < this.leapTouches.length; i++) {
+            if (this.leapTouches[i].id == idToFind) {
+                return i;
+            }
+        }
+        return -1;    // not found
+    }
+
+    function onStart(cursor){
+        socket.emit("cursorStart", cursor);
+    }
+
+    function onMove(cursor){
+        socket.emit("cursorMove", cursor);
+    }
+
+    function onEnd(cursor){
+        socket.emit("cursorEnd", cursor);
+    }
+
+</script>
+</body>
+</html>
