@@ -1,3 +1,14 @@
+console.log("\n\n");
+////////////                                            ////////////
+console.log("     _                ______)                       ");
+console.log(" ___/__)             (, /                /)         ");
+console.log("(, /    _  _  __       /   ____    _ _/_(/    _  __ ");
+console.log("  /   _(/_(_(_/_)_  ) /   (_)(_/__(/_(__/ )__(/_/ (_");
+console.log(" (_____    .-/     (_/      .-/                     ");
+console.log("        ) (_/              (_/                      ");
+////////////                                            ////////////
+console.log("\n");
+
 var osc = require('osc-min');
 var dgram = require('dgram');
 var express = require('express.io');
@@ -6,7 +17,7 @@ var app = express();
 app.http().io();
 
 // TUIO Variables
-var host = "192.168.1.255";
+var host = "localhost";
 var port = 3333;
 var frameId = 0;
 var aliveIds = [];
@@ -54,7 +65,7 @@ app.listen(3456, function () {
     require('dns').lookup(require('os').hostname(), function (err, add, fam) {
         serverPort = 3456;
         serverAddress = add;
-        console.log('Express server listening at ' + add + ' on port ' + serverPort);
+        console.log("Serving HTML Interface at", add + ":" + serverPort, "with Socket.IO cursors");
     });
 });
 
@@ -62,7 +73,7 @@ app.listen(3456, function () {
 var udp = dgram.createSocket("udp4");
 udp.bind(function () {
     udp.setBroadcast(true);
-    console.log("TUIO Server running at", host, "on port", port);
+    console.log("Serving TUIO Stream at", host + ":" + port);
 });
 
 function getAliveIds() {
