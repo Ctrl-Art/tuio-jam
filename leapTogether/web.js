@@ -28,6 +28,7 @@ var serverAddress;
 var express = require('express.io');
 var app = express();
 app.http().io();
+var open = require('open');
 
 // TUIO
 var osc = require('osc-min');
@@ -38,11 +39,12 @@ var aliveTimes = {};
 setInterval(checkForStaleCursors, 500);
 
 // Start HTTP & Socket Serving
-app.listen(3456, function () {
+app.listen(argv.port, function () {
     require('dns').lookup(require('os').hostname(), function (err, add, fam) {
-        serverPort = 3456;
+        serverPort = argv.port;
         serverAddress = add;
         console.log("Serving HTML Interface at", add + ":" + serverPort, "with Socket.IO cursors");
+        open("http://" + add + ":" + serverPort);
     });
 });
 
