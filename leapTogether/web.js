@@ -60,7 +60,7 @@ app.io.route('cursorStart', function (req) {
     aliveIds.push(cursor.id);
     aliveTimes[cursor.id] = new Date().getTime();
     var buffer = cursorToBuffer(cursor);
-    udp.send(buffer, 0, buffer.length, port, argv.host);
+    udp.send(buffer, 0, buffer.length, argv.port, argv.host);
 
 });
 
@@ -68,7 +68,7 @@ app.io.route('cursorMove', function (req) {
     var cursor = req.data;
     aliveTimes[cursor.id] = new Date().getTime();
     var buffer = cursorToBuffer(cursor);
-    udp.send(buffer, 0, buffer.length, port, argv.host);
+    udp.send(buffer, 0, buffer.length, argv.port, argv.host);
 });
 
 app.io.route('cursorEnd', function (req) {
@@ -76,7 +76,7 @@ app.io.route('cursorEnd', function (req) {
     aliveIds.splice(aliveIds.indexOf(cursor.id), 1);
     delete aliveTimes[cursor.id];
     var buffer = cursorToBuffer();
-    udp.send(buffer, 0, buffer.length, port, argv.host);
+    udp.send(buffer, 0, buffer.length, argv.port, argv.host);
 });
 
 app.use(express.static('web'));
