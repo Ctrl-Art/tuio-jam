@@ -13,12 +13,23 @@ var osc = require('osc-min');
 var dgram = require('dgram');
 var express = require('express.io');
 
+var yargs = require('yargs');
+var argv = require('yargs').default({
+            host: "localhost",
+            port: 3333
+        })
+        .alias('h', 'host')
+        .alias('p', 'port')
+        .usage('Bridge Leap to TUIO via Web Page')
+        .argv
+    ;
+
+yargs.showHelp();
+
 var app = express();
 app.http().io();
 
 // TUIO Variables
-var host = "localhost";
-var port = 3333;
 var frameId = 0;
 var aliveIds = [];
 var aliveTimes = {};
@@ -34,7 +45,7 @@ app.io.route('cursorStart', function (req) {
     aliveIds.push(cursor.id);
     aliveTimes[cursor.id] = new Date().getTime();
     var buffer = cursorToBuffer(cursor);
-    udp.send(buffer, 0, buffer.length, port, host);
+    udp.send(buffer, 0, buffer.length, port, argv.host);
 
 });
 
@@ -42,7 +53,7 @@ app.io.route('cursorMove', function (req) {
     var cursor = req.data;
     aliveTimes[cursor.id] = new Date().getTime();
     var buffer = cursorToBuffer(cursor);
-    udp.send(buffer, 0, buffer.length, port, host);
+    udp.send(buffer, 0, buffer.length, port, argv.host);
 });
 
 app.io.route('cursorEnd', function (req) {
@@ -50,7 +61,7 @@ app.io.route('cursorEnd', function (req) {
     aliveIds.splice(aliveIds.indexOf(cursor.id), 1);
     delete aliveTimes[cursor.id];
     var buffer = cursorToBuffer();
-    udp.send(buffer, 0, buffer.length, port, host);
+    udp.send(buffer, 0, buffer.length, port, argv.host);
 });
 
 app.use(express.static('web'));
@@ -73,7 +84,7 @@ app.listen(3456, function () {
 var udp = dgram.createSocket("udp4");
 udp.bind(function () {
     udp.setBroadcast(true);
-    console.log("Serving TUIO Stream at", host + ":" + port);
+    console.log("Serving TUIO Stream at", argv.host + ":" + argv.port);
 });
 
 function getAliveIds() {
@@ -98,7 +109,7 @@ function cursorToBuffer(cursor) {
 
     var source = {
         address: getTuioPrefix(),
-        args: ["source", "LeapTogether@" + host]
+        args: ["source", "LeapTogether@" + argv.host]
     };
 
     var alive = {
