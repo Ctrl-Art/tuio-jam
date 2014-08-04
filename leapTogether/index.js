@@ -5,7 +5,8 @@
 var Leap = require('leapjs');
 var osc = require('osc-min');
 var dgram = require('dgram');
-var host = "192.168.1.255";
+//var host = "192.168.1.255";
+var host = "localhost";
 var port = 3333;
 
 var controller = new Leap.Controller();
@@ -19,7 +20,7 @@ udp.bind(function(){
 });
 var frameId = 0;
 
-setInterval( checkForStaleCursors, 500);
+setInterval( checkForStaleCursors, 1000);
 
 controller.on("frame", function(frame){
     if(frame.pointables.length > 0) {
@@ -132,7 +133,6 @@ function pointableToBuffer(pointable){
 function onStart(pointable){
     var buffer = pointableToBuffer(pointable);
     udp.send(buffer, 0, buffer.length, port, host);
-    console.log('pointer start');
 }
 
 function onMove(pointable){
@@ -141,27 +141,34 @@ function onMove(pointable){
     pointable.lastActive = new Date().getTime();
     var buffer = pointableToBuffer(pointable);
     udp.send(buffer, 0, buffer.length, port, host);
+ //   console.log('moved', aliveIds.length, 'cursors');
 }
 
 function onEnd(pointable){
     var buffer = pointableToBuffer();
     udp.send(buffer, 0, buffer.length, port, host);
-    console.log('pointer end');
 }
 
 function checkForStaleCursors(){
+    var numberRemoved = 0;
     for(var i = aliveIds.length - 1; i >= 0; i--){
         var id = aliveIds[i];
         var pointable = cursors[id];
-        if(pointable.valid){
+
+        if(pointable){
             var timeSinceLastActive = new Date().getTime() - pointable.lastActive;
-            if(timeSinceLastActive > 1500){
+            if(timeSinceLastActive > 30){
                 delete cursors[id];
                 aliveIds.splice(i, 1);
                 onEnd(pointable);
+                numberRemoved++;
             }
         } else {
+            numberRemoved++;
             aliveIds.splice(i, 1);
         }
+    }
+    if(numberRemoved > 0){
+        console.log('Removed', numberRemoved, 'Now', aliveIds.length, 'Alive');
     }
 }
