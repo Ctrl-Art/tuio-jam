@@ -9,10 +9,7 @@ console.log("        ) (_/              (_/                      ");
 ////////////                                            ////////////
 console.log("\n");
 
-var osc = require('osc-min');
-var dgram = require('dgram');
-var express = require('express.io');
-
+// YARGS
 var yargs = require('yargs');
 var argv = require('yargs').default({
             host: "localhost",
@@ -23,21 +20,39 @@ var argv = require('yargs').default({
         .usage('Bridge Leap to TUIO via Web Page')
         .argv
     ;
-
 yargs.showHelp();
 
+// EXPRESS HTML SERVER
+var serverPort;
+var serverAddress;
+var express = require('express.io');
 var app = express();
 app.http().io();
 
-// TUIO Variables
+// TUIO
+var osc = require('osc-min');
+var dgram = require('dgram');
 var frameId = 0;
 var aliveIds = [];
 var aliveTimes = {};
-
-var serverPort;
-var serverAddress;
-
 setInterval(checkForStaleCursors, 500);
+
+// Start HTTP & Socket Serving
+app.listen(3456, function () {
+    require('dns').lookup(require('os').hostname(), function (err, add, fam) {
+        serverPort = 3456;
+        serverAddress = add;
+        console.log("Serving HTML Interface at", add + ":" + serverPort, "with Socket.IO cursors");
+    });
+});
+
+// Start TUIO Server
+var udp = dgram.createSocket("udp4");
+udp.bind(function () {
+    udp.setBroadcast(true);
+    console.log("Serving TUIO Stream at", argv.host + ":" + argv.port);
+});
+
 
 // Route Cursor Events to TUIO
 app.io.route('cursorStart', function (req) {
@@ -69,22 +84,6 @@ app.use(express.static('web'));
 // Send the client html.
 app.get('/', function (req, res) {
     res.sendfile(__dirname + '/web/views/leap.html')
-});
-
-// Start HTTP & Socket Serving
-app.listen(3456, function () {
-    require('dns').lookup(require('os').hostname(), function (err, add, fam) {
-        serverPort = 3456;
-        serverAddress = add;
-        console.log("Serving HTML Interface at", add + ":" + serverPort, "with Socket.IO cursors");
-    });
-});
-
-// Start TUIO Server
-var udp = dgram.createSocket("udp4");
-udp.bind(function () {
-    udp.setBroadcast(true);
-    console.log("Serving TUIO Stream at", argv.host + ":" + argv.port);
 });
 
 function getAliveIds() {
